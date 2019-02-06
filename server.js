@@ -1,40 +1,42 @@
-const PORT = process.env.PORT || 3000;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost/mongoHeadlines';
-
 const express = require('express');
-const exphbs = require('express-handlebars');
+// const logger = require('morgan');
 const mongoose = require('mongoose');
-// const cheerio = require('cheerio');
-// const axios = require('axios');
-const logger = require("morgan");
+const exphbs = require('express-handlebars');
 
-const routes = require('./routes');
-
+let PORT = process.env.PORT || 3000;
 
 const app = express();
-app.engine('handlebars',
-  exphbs({
-    defaultLayout: 'main',
-  }));
 
-app.set('view engine', 'handlebars');
+const router = express.Router();
 
-// Parse request body as JSON:
-app.use(logger("dev"));
-// Parse request body as JSON
+require('./config/routes')(router);
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-// Make public a static folder
-app.use(express.static("public"));
+app.use(express.static(__dirname + '/public'));
 
-// Connect to the Mongo DB
-mongoose.connect(MONGODB_URI, { useNewUrlParser: true });
+app.engine(
+  'handlebars',
+  exphbs({
+    defaultLayout: 'main'
+  })
+);
+app.set('view engine', 'handlebars');
 
-app.use(routes);
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
 
+app.use(router);
 
-app.listen(PORT, () => {
-  console.log(`Listening very carefully at : http://localhost:` + PORT);
+mongoose.connect(MONGODB_URI, err => {
+  if(err) {
+    console.log(err);
+  }
+  else {
+    app.listen(PORT, () => {
+      console.log('Mongoose is connected');
+      console.log("Listening carefully on " + PORT + "!");
+      });
+  }
 });
 
 module.exports = app;
