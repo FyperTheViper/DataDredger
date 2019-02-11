@@ -1,12 +1,11 @@
 const express = require('express');
-const logger = require('morgan');
 const mongoose = require('mongoose');
 const exphbs = require('express-handlebars');
-var axios = require("axios");
-var cheerio = require("cheerio");
-var db = require("./models");
+const axios = require("axios");
+const cheerio = require("cheerio");
+const db = require("./models");
 
-let PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 const app = express();
 
@@ -24,165 +23,121 @@ app.set('view engine', 'handlebars');
 
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
 
-app.get('/', function (req, res) {
+app.get('/', (req, res) => {
   db.Article.find({})
-      .then(function(data) {
-        var hbsObject = {
+      .then(data => {
+        const hbsObject = {
           articles: data
         };
         res.render("index", hbsObject);
       });
   });
   
-  //Displays Notes
-  app.get('/notes', function (req, res) {
+  app.get('/notes', (req, res) => {
   db.Note.find({})
-      .then(function(data) {
-        var hbsObject = {
+      .then(data => {
+        const hbsObject = {
           notes: data
         };
         console.log(hbsObject);
         res.render("index", hbsObject);
       });
   });
+
+  app.get("/scrape", (req, res) => {
+    axios.get("https://www.sfchronicle.com/").then(response => {
+      const $ = cheerio.load(response.data);
+      $(".prem-hl-item ").each((i, element) => {
+        let result = {};
   
-  //MY NYT SCRAPE
-  // A GET route for scraping the echoJS website
-  app.get("/scrape", function(req, res) {
-    // First, we grab the body of the html with axios
-    axios.get("https://www.nytimes.com/").then(function(response) {
-      // Then, we load that into cheerio and save it to $ for a shorthand selector
-      var $ = cheerio.load(response.data);
-      // Now, we grab every h2 within an article tag, and do the following:
-      $("article").each(function(i, element) {
-        // Save an empty result object
-        var result = {};
-        // Add the title, href and summary of every link, and save them as properties of the result object
-  
-        result.title = $(element).find("h2").text();
+        result.title = $(element).find("h2.headline").find("a").text();
         result.link = $(element).find("a").attr("href");
         result.summary = $(element).find("p").text();
   
-        // Create a new Article using the `result` object built from scraping
         db.Article.create(result)
-          .then(function(dbArticle) {
-            // View the added result in the console
+          .then(dbArticle => {
             console.log(dbArticle);
           })
-          .catch(function(err) {
-            // If an error occurred, log it
+          .catch(err => {
             console.log(err);
           });
       });
-      //redirect to homepage after scraping
       res.redirect("../");
     });
   
   });
   
-  // Route for getting all Articles from the db
-  app.get("/articles", function(req, res) {
-    // Grab every document in the Articles collection
+  app.get("/articles", res => {
     db.Article.find({})
-      .then(function(dbArticle) {
-        // If we were able to successfully find Articles, send them back to the client
+      .then(dbArticle => {
         res.json(dbArticle);
       })
-      .catch(function(err) {
-        // If an error occurred, send it to the client
+      .catch(err => {
         res.json(err);
       });
   });
   
-  // Clear the DB
-  app.get("/clearall", function(req, res) {
-  
-    // Remove every note from the notes collection
-    db.Article.remove({}, function(error, response) {
-      // Log any errors to the console
+  app.get("/clearall", (req, res) => {
+
+    db.Article.remove({}, (error, response) => {
       if (error) {
         console.log(error);
         res.send(error);
       }
       else {
-        // Otherwise, send the mongojs response to the browser
-        // This will fire off the success function of the ajax request
         console.log(response);
-        //redirect to homepage after scraping
         res.redirect("../");
       }
     });
   });
   
-  app.get("/removeone/:id", function(req, res) {
+  app.get("/removeone/:id", (req, res) => {
   
-    // Remove every note from the notes collection
-    db.Article.remove({_id: req.params.id }, function(error, response) {
-      // Log any errors to the console
+    db.Article.remove({_id: req.params.id }, (error, response) => {
       if (error) {
         console.log(error);
         res.send(error);
       }
       else {
-        // Otherwise, send the mongojs response to the browser
-        // This will fire off the success function of the ajax request
         console.log(response);
-        //redirect to homepage after scraping
         res.redirect("../");
       }
     });
   });
   
-  // Route for grabbing a specific Article by id, populate it with it's note
-  app.get("/articles/:id", function(req, res) {
-    // Using the id passed in the id parameter, prepare a query that finds the matching one in our db...
+  app.get("/articles/:id", (req, res) => {
     db.Article.findOne({ _id: req.params.id })
-      // ..and populate all of the notes associated with it
       .populate("note")
-      .then(function(dbArticle) {
-        // If we were able to successfully find an Article with the given id, send it back to the client
+      .then(dbArticle => {
         res.json(dbArticle);
       })
-      .catch(function(err) {
-        // If an error occurred, send it to the client
+      .catch(err => {
         res.json(err);
       });
   });
   
-  // Route for saving/updating an Article's associated Note
-  app.post("/articles/:id", function(req, res) {
-    // Create a new note and pass the req.body to the entry
+  app.post("/articles/:id", (req, res) => {
     db.Note.create(req.body)
-      .then(function(dbNote) {
-        // If a Note was created successfully, find one Article with an `_id` equal to `req.params.id`. Update the Article to be associated with the new Note
-        // { new: true } tells the query that we want it to return the updated User -- it returns the original by default
-        // Since our mongoose query returns a promise, we can chain another `.then` which receives the result of the query
+      .then(dbNote => {
         return db.Article.findOneAndUpdate({ _id: req.params.id }, { note: dbNote._id }, { new: true });
       })
-      .then(function(dbArticle) {
-        // If we were able to successfully update an Article, send it back to the client
+      .then(dbArticle => {
         res.json(dbArticle);
       })
-      .catch(function(err) {
-        // If an error occurred, send it to the client
+      .catch(err => {
         res.json(err);
       });
   });
   
-  app.get("/deletenote/:id", function(req, res) {
+  app.get("/deletenote/:id", (req, res) => {
   
-    // Remove one note from the notes collection
-    db.Note.remove({_id: req.params.id }, function(error, response) {
-      // Log any errors to the console
+    db.Note.remove({_id: req.params.id }, (error, response) => {
       if (error) {
         console.log(error);
         res.send(error);
       }
       else {
-        // Otherwise, send the mongojs response to the browser
-        // This will fire off the success function of the ajax request
         console.log(response);
-        //redirect to homepage after scraping
         res.redirect("../notes");
       }
     });

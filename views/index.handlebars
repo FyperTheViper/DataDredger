@@ -1,31 +1,80 @@
+<!-- Banner -->
 
-<nav class="navbar navbar-inverse">
-  <div class="container-fluid">
-    <div class="navbar-header">
-      <a class="navbar-brand "href="/">Data Dredger</a>
-    </div>
-    <ul class="nav navbar-nav">
-      <li class="active"><a href="/">Home</a></li>
-      <li><a href="/saved">Your Saved Links</a></li>
-    </ul>
-  </div>
-</nav>
-<div class="jumbotron text-center">
-  <div class="overlay">
-  </div>
-  <div class="background-image">
-  </div>
-  <div class="caption">
-    <h1>Data Dredger</h1>
-    <p></p>
-  </div>
-</div>
-<div class="container-fluid article-container"></div>
-</div>
+<div class="container">
 
-<footer class="footer">
-  <div class="container">
-    <p></p>
+  <div class="row">
+    <!-- Headers -->
+    <h1 id="banner" class="col-12 text-center p-4 mx-auto">SF Chronicle Scapper</h1>
+    <h5 class="col-10 text-center bg-warning2 p-2 mx-auto">Find up to date articles, write notes, and delete unwanted articles</h5>
   </div>
-</footer>
+
+  <!-- Buttons Directory -->
+  <div id="btn-container">
+      <a href="/notes"><button type="button" id="notebutton" class="btn btn-dark">My Notes</button></a>
+      <a href="/"><button type="button" id="artbutton" class="btn btn-dark">See Articles</button></a>
+      <a href="/clearall"><button type="button" id="clearbutton" class="btn btn-dark">Clear Articles</button></a>
+      <a href="/scrape"><button type="button" id="scrapebutton" class="btn btn-dark">Get New Articles!</button></a>
+  </div>
+
+  <!-- Articles Area -->
+  <div class="row">
+    {{#each articles}}
+      <div class="card col-5 p-3 my-2 mx-auto">
+        <div class="card-body">
+          <h5 class="card-title">{{title}}</h5>
+          <a href="https://www.sfchronicle.com{{link}}" target="_blank">Read Full Article</a>
+          <p class="card-text"><small class="text-muted">{{summary}}</small></p>
+          <!-- Button to trigger modal for Note -->
+          <button data-id="{{_id}}" type="button" id="writenote" name="button" class="btn btn-success" data-toggle="modal" data-target="#exampleModal">Write Note</button>
+
+          <!-- Button to remove article from db and container  -->
+          <a href="/removeone/{{_id}}">
+            <button data-id="{{_id}}" type="button" id="remove_article" name="button" class="btn btn-warning">Remove Article</button>
+          </a>
+
+          <!-- Note Modal -->
+          <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <div class="form-group">
+                    <label for="exampleFormControlInput1">Note Title</label>
+                    <input id="titleinput" type="text" class="form-control" id="exampleFormControlInput1">
+                  </div>
+                  <!-- <h5 class="modal-title" id="exampleModalLabel">Modal title</h5> -->
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <div class="form-group">
+                    <label for="exampleFormControlTextarea1">Article Notes:</label>
+                    <textarea id="bodyinput" class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                  <button id="savenote" type="button" data-dismiss="modal" class="btn btn-primary">Save Note</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /Note Modal -->
+        </div>
+      </div>
+    {{/each}}
+  </div>
+
+
+  <!-- See note-block.handlebars, displays notes -->
+  <div>
+    {{#each notes}}
+      {{#if body}}
+        {{> note-block}}
+      {{/if}}
+    {{/each}}
+  </div>
+
+
+</div>
 

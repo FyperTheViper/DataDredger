@@ -1,0 +1,23 @@
+  body {
+    background-color: rgb(228, 233, 236);
+  }
+
+  #banner {
+    background-color: #F04A00;
+    font-family: 'UnifrakturCook', cursive;
+  }
+
+  a, h5 {
+    padding: 8px;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+  }
+
+  p {
+    font-family: 'Times New Roman', Times, serif;
+  }
+
+  #btn-container {
+    display: flex;
+    justify-content: center;
+    padding: 20px
+  }
